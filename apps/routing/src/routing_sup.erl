@@ -29,7 +29,17 @@ init([]) ->
     SupFlags = #{strategy => one_for_all,
                  intensity => 0,
                  period => 1},
-    ChildSpecs = [],
+    io:format(user, "wat~n", []),
+    {Idx, HwAddr} = find_interface("vboxnet5"),
+    {ok, Socket} = socket:open(17, raw, 16#0100),
+    ChildSpecs = [#{id => isis_speaker, start => {isis, start_link, [#{"socket" => Socket, "hostname" => "test", "ifindex" => Idx, "hwaddr" => HwAddr, "net" => "40" }]}}],
     {ok, {SupFlags, ChildSpecs}}.
 
 %% internal functions
+
+find_interface(Name) ->
+	{ok, Interfaces} = net:if_names(),
+	{ok, InterfaceInfo} = inet:getifaddrs(),
+	Idx = lists:last([Idx || {Idx, NetName} <- Interfaces, NetName =:= Name ]),
+	HwAddr = lists:last([ list_to_binary(X) || {NetName, [_,_,_,_,_,_,{_, X}]} <- InterfaceInfo, NetName =:= Name]),
+	{Idx, HwAddr}.
