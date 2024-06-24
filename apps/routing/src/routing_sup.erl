@@ -32,7 +32,7 @@ init([]) ->
     io:format(user, "wat~n", []),
     {Idx, HwAddr} = find_interface("vboxnet5"),
     {ok, Socket} = socket:open(17, raw, 16#0100),
-    ChildSpecs = [#{id => isis_speaker, start => {isis, start_link, [#{"socket" => Socket, "hostname" => "test", "ifindex" => Idx, "hwaddr" => HwAddr, "net" => "40" }]}}],
+    ChildSpecs = [#{id => ospf_speaker, start => {ospfv3, start_link, [#{"socket" => Socket, "hostname" => "test", "ifindex" => Idx}]}}],
     {ok, {SupFlags, ChildSpecs}}.
 
 %% internal functions
