@@ -30,9 +30,8 @@ init([]) ->
                  intensity => 0,
                  period => 1},
     io:format(user, "wat~n", []),
-    {Idx, HwAddr} = find_interface("vboxnet5"),
-    {ok, Socket} = socket:open(17, raw, 16#0100),
-    ChildSpecs = [#{id => ospf_speaker, start => {ospfv3, start_link, [#{"socket" => Socket, "hostname" => "test", "ifindex" => Idx}]}}],
+    {Idx, HwAddr, LinkLocal} = find_interface("vboxnet5"),
+    ChildSpecs = [#{id => ospf_speaker, start => {ospfv3, start_link, [#{"hostname" => "test", "ifindex" => Idx, "ifaddr" => LinkLocal, "hwaddr" => HwAddr, "router_id" => {0,0,0,1}, "area_id"=>{0,0,0,0}}]}}],
     {ok, {SupFlags, ChildSpecs}}.
 
 %% internal functions
@@ -41,5 +40,7 @@ find_interface(Name) ->
 	{ok, Interfaces} = net:if_names(),
 	{ok, InterfaceInfo} = inet:getifaddrs(),
 	Idx = lists:last([Idx || {Idx, NetName} <- Interfaces, NetName =:= Name ]),
-	HwAddr = lists:last([ list_to_binary(X) || {NetName, [_,_,_,_,_,_,{_, X}]} <- InterfaceInfo, NetName =:= Name]),
-	{Idx, HwAddr}.
+	MyInterface = lists:last([X || {NetName, X} <- InterfaceInfo, Name =:= NetName]),
+	HwAddr = lists:last([X || {ItemName, X} <- MyInterface, ItemName =:= hwaddr]),
+	LinkLocal = lists:last([X || {ItemName, X} <- MyInterface, ItemName =:= addr, element(1, X) =:= 65152]),
+	{Idx, HwAddr, LinkLocal}.
