@@ -1,20 +1,15 @@
-%%%-------------------------------------------------------------------
-%% @doc routing top level supervisor.
-%% @end
-%%%-------------------------------------------------------------------
-
--module(routing_sup).
+-module(config_sup).
 
 -behaviour(supervisor).
 
--export([start_link/0]).
+-export([start_link/1]).
 
 -export([init/1]).
 
 -define(SERVER, ?MODULE).
 
-start_link() ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+start_link(Args) ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE, Args).
 
 %% sup_flags() = #{strategy => strategy(),         % optional
 %%                 intensity => non_neg_integer(), % optional
@@ -25,12 +20,10 @@ start_link() ->
 %%                  shutdown => shutdown(), % optional
 %%                  type => worker(),       % optional
 %%                  modules => modules()}   % optional
-init([]) ->
+init({FileName}) ->
     SupFlags = #{strategy => one_for_all,
                  intensity => 0,
                  period => 1},
-    ChildSpecs = [#{ id => config_manager, start => {config_sup, start_link, [{"/home/phil/router.json"}]}}],
+    ChildSpecs = [#{id => file_watcher, start => {file_watcher, start_link, [{FileName, self()}]}}, #{id => config, start => {config, start_link, [[]]}}],
     {ok, {SupFlags, ChildSpecs}}.
-
-%% internal functions
 
