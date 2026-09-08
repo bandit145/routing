@@ -1,15 +1,20 @@
--module(config_sup).
+%%%-------------------------------------------------------------------
+%% @doc routing top level supervisor.
+%% @end
+%%%-------------------------------------------------------------------
+
+-module(instance_sup).
 
 -behaviour(supervisor).
 
--export([start_link/1]).
+-export([start_link/0]).
 
 -export([init/1]).
 
 -define(SERVER, ?MODULE).
 
-start_link(Args) ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, Args).
+start_link() ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
 %% sup_flags() = #{strategy => strategy(),         % optional
 %%                 intensity => non_neg_integer(), % optional
@@ -20,10 +25,12 @@ start_link(Args) ->
 %%                  shutdown => shutdown(), % optional
 %%                  type => worker(),       % optional
 %%                  modules => modules()}   % optional
-init({FileName, SupPid}) ->
-    SupFlags = #{strategy => one_for_all,
+init([]) ->
+    SupFlags = #{strategy => one_for_one,
                  intensity => 0,
                  period => 1},
-    ChildSpecs = [#{id => file_watcher, start => {file_watcher, start_link, [{FileName, self()}]}}, #{id => config, start => {config, start_link, [SupPid]}}],
+    ChildSpecs = [],
     {ok, {SupFlags, ChildSpecs}}.
+
+%% internal functions
 

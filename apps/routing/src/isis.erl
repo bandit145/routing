@@ -1,19 +1,25 @@
 -module(isis).
 -include("routing.hrl").
 -behavior(gen_server).
--export([handle_cast/2, handle_call/3, init/1, start_link/1]).
+-export([handle_cast/2, handle_info/2, handle_call/3, init/1, start_link/1]).
 
--record(state, {net, hostname, socket, interface}).
+-record(state, {area, system_id, hostname, interfaces=[], neighbors, ticker, holding_timer, designated_is}).
 
--record(isis_hello, {circuit_type, sender_sys_id, holding_timer, pdu_len, prioritiy, desig_sys_id, protos_supported=[], area_addresses=[], ip_interface_addresses=[]}).
+-record(timer, {name, last_time, interval}).
 
+start_link(Config) ->
+	gen_server:start_link(?MODULE, Config, []).
 
-start_link(Args) ->
-	gen_server:start_link(?MODULE, [Args], []).
+init(Config) ->
+	{ok, T} = timer:send_interval(1000, self(), tick),
+	{ok, #state{ticker=T}}.
 
-init([Args]) ->
-	ok = socket:bind(maps:get("socket", Args), #{family => packet, protocol => 16#0100, pkttype =>host, hatype => ether, ifindex => maps:get("ifindex", Args), addr => maps:get("hwaddr", Args)}),
-	{ok, #state{net=maps:get("net", Args), hostname=maps:get("hostname", Args), socket=maps:get("socket", Args)}}.
+handle_cast(Data, State) when is_record(Data, isis_l1_hello) ->
+	logger:debug("GOT HELLO~n"),
+	{noreply, State};
+
+handle_cast({interface_register, Interface}, State) ->
+	{noreply, State#state{interfaces=State#state.interfaces ++ [Interface]}};
 
 handle_cast(Request, State) ->
 	{noreply, State}.
@@ -21,4 +27,6 @@ handle_cast(Request, State) ->
 handle_call(Request, From, State) ->
 	{noreply, State}.
 
-
+handle_info(tick, State) ->
+	[gen_server:cast(X, {send,#isis_l1_hello{circuit_type=16#1, system_id=State#state.system_id, holding_timer=State#state.holding_timer, priority=64, designated_is=State#state.designated_is}}) || X <:- State#state.interfaces],
+	{noreply, State}.

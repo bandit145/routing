@@ -1,7 +1,19 @@
+-record(ether_frame, {dest, src, length, data}).
+-record(destination_service_access_point, {sap, ig}).
+-record(source_service_access_point, {sap, cr}).
+-record(control_field, {command, frame_type}).
+-record(logical_link_control, {dsap, ssap, control_field, data}).
+-record(isis_l1_hello, {circuit_type, system_id, holding_timer, pdu_length, priority, designated_is, fields}).
+-record(isis_field, {type, value}).
 
--define(ISIS_CIRCUIT_TYPE_L12, 16#03).
--define(ISIS_PDU_TYPE_L1_HELLO, 15).
+%%IS-IS Types
+-define(ISISProtocolsSupportedField, 129).
+-define(ISISAreaAddressesField,1).
+-define(ISISIPInterfaceAddressField, 132).
+-define(ISISPaddingField, 8).
+-define(ISISL1HelloPDU, 15).
 
--record(isis_pdu, {length, protocol_id_ext, id_length, pdu_type, version, max_area_addresses, circuit_type, source_id, holding_time, pdu_length, priority, lan_id, fields}).
+%%ERTS table records
+-record(route, {priority, address, prefix_length, instance, interface,protocol}).
+-record(neighbor, {system, interface}).
 
--record(isis_field, {code, value}).
