@@ -3,7 +3,7 @@
 -behavior(gen_server).
 -export([handle_cast/2, handle_call/3, handle_info/2, init/1, start_link/1]).
 
--record(state, {name, socket, config, instance}).
+-record(state, {name, socket, config, instance, mac}).
 
 start_link({Name, Config}) ->
 	gen_server:start_link(?MODULE, {Name, Config}, []).
@@ -21,6 +21,8 @@ handle_cast({instance_update, Instance}, State) ->
 	{noreply, State#state{instance=Instance}};
 
 handle_cast({send, Data}, State) when is_record(Data, isis_l1_hello) ->
+	EncodedData = packets:encode(isis, {State#state.mac, <<>>, Data}),
+	socket:send(State#state.socket, EncodedData),
 	logger:debug("I would send ~p", [Data]),
 	{noreply, State};
 
@@ -54,7 +56,7 @@ handle_cast(start, State) ->
 	Data = <<Proto/binary, Index:32/native-signed-integer, 0:16, 0:8, 0:8, 0:64>>,
 	ok = socket:bind(State#state.socket, #{family => 17, addr => Data}),
 	gen_server:cast(self(), recv),
-	{noreply, State}.
+	{noreply, State#state{mac=MAC}}.
 
 handle_info(Data, State) ->
 	logger:debug("DATA ~p~n", [Data]),

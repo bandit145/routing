@@ -14,6 +14,6 @@
 -define(ISISL1HelloPDU, 15).
 
 %%ERTS table records
--record(route, {priority, address, prefix_length, instance, interface,protocol}).
--record(neighbor, {system, interface}).
+-record(route, {priority, address, prefix_length, instance, interface,protocol, neighbor}).
+-record(neighbor, {system, interface, edges}).
 
